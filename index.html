@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DTE Maharashtra Diploma Predictor</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
+
+  <div class="max-w-6xl mx-auto bg-slate-800 rounded-2xl p-6 shadow-2xl border border-slate-700">
+    <h1 class="text-3xl font-extrabold mb-2 text-blue-400">🎓 DTE Maharashtra Diploma College Finder</h1>
+    <p class="text-slate-400 mb-6">Search Government & Private Colleges with category-wise cutoffs, fees, and hostel info.</p>
+
+    <!-- Filter Form -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">10th Percentage (%)</label>
+        <input type="number" id="percentage" value="78" step="0.5" class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-medium focus:outline-none focus:border-blue-500" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Category</label>
+        <select id="category" class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-medium focus:outline-none focus:border-blue-500">
+          <option value="SC">SC</option>
+          <option value="OBC">OBC</option>
+          <option value="OPEN">OPEN</option>
+          <option value="ST">ST</option>
+          <option value="EWS">EWS</option>
+          <option value="TFWS">TFWS</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">College Type</label>
+        <select id="college_type" class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-medium focus:outline-none focus:border-blue-500">
+          <option value="All Types (Govt & Private)">All Types</option>
+          <option value="Government">Government / Aided</option>
+          <option value="Private">Private / Un-Aided</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">District</label>
+        <select id="district" class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-medium focus:outline-none focus:border-blue-500">
+          <option value="All Districts">All Districts</option>
+          <option value="Nagpur">Nagpur</option>
+          <option value="Nanded">Nanded</option>
+          <option value="Pune">Pune</option>
+          <option value="Mumbai Suburban">Mumbai</option>
+          <option value="Nashik">Nashik</option>
+          <option value="Amravati">Amravati</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Branch</label>
+        <select id="branch" class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-medium focus:outline-none focus:border-blue-500">
+          <option value="All Branches">All Branches</option>
+          <option value="Computer Engineering">Computer Engineering</option>
+          <option value="Information Technology">Information Technology</option>
+          <option value="Mechanical Engineering">Mechanical Engineering</option>
+          <option value="Civil Engineering">Civil Engineering</option>
+        </select>
+      </div>
+    </div>
+
+    <button onclick="fetchColleges()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition duration-200 shadow-lg mb-6">
+      🔍 Find Eligible Colleges
+    </button>
+
+    <!-- Results Table -->
+    <div class="overflow-x-auto rounded-lg border border-slate-700">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-700 text-blue-300 font-semibold uppercase text-xs">
+          <tr>
+            <th class="p-3.5">College Name</th>
+            <th class="p-3.5">District</th>
+            <th class="p-3.5">Type</th>
+            <th class="p-3.5">Branch</th>
+            <th class="p-3.5">Cutoff</th>
+            <th class="p-3.5">Annual Fees</th>
+            <th class="p-3.5">Hostel Details</th>
+          </tr>
+        </thead>
+        <tbody id="resultsTable" class="divide-y divide-slate-700 bg-slate-800">
+          <!-- Populated by Javascript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+  async function fetchColleges() {
+    const perc = document.getElementById('percentage').value;
+    const cat = document.getElementById('category').value;
+    let type = document.getElementById('college_type').value;
+    let dist = document.getElementById('district').value;
+    let branch = document.getElementById('branch').value;
+
+    // Standardize 'All' options
+    if (type.includes("All")) type = "All Types (Govt & Private)";
+    if (dist.includes("All")) dist = "All Districts";
+    if (branch.includes("All")) branch = "All Branches";
+
+    // Dynamically picks localhost when testing locally, or Render URL on live web
+    const baseUrl = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
+      ? "http://127.0.0.1:8000"
+      : "https://maharashtra-diploma-api.onrender.com"; 
+
+    const url = `${baseUrl}/api/predict?percentage=${perc}&category=${cat}&college_type=${encodeURIComponent(type)}&district=${encodeURIComponent(dist)}&branch=${encodeURIComponent(branch)}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      const tbody = document.getElementById('resultsTable');
+      tbody.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-yellow-400 font-medium">No eligible options found for ${perc}% with the selected filters.</td></tr>`;
+        return;
+      }
+
+      data.forEach(item => {
+        const isGovt = item["Type"] ? item["Type"].includes("Government") : false;
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-750 transition">
+            <td class="p-3.5 font-bold text-white">${item["College Name"]}</td>
+            <td class="p-3.5 text-slate-300">${item["District"]}</td>
+            <td class="p-3.5">
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${isGovt ? "bg-emerald-900/60 text-emerald-300 border border-emerald-700" : "bg-purple-900/60 text-purple-300 border border-purple-700"}">
+                ${item["Type"]}
+              </span>
+            </td>
+            <td class="p-3.5 text-blue-300 font-medium">${item["Branch"]}</td>
+            <td class="p-3.5 font-extrabold text-emerald-400">${item["Min Percentage (%)"]}%</td>
+            <td class="p-3.5 text-amber-300 font-medium">${item["Approx Annual Fees"]}</td>
+            <td class="p-3.5 text-xs text-slate-300">
+              <div class="font-semibold text-white">${item["Hostel Facility"]}</div>
+              <div class="text-slate-400">${item["Hostel Fee"]}</div>
+            </td>
+          </tr>
+        `;
+      });
+    } catch (err) {
+      console.error("Error connecting to API backend:", err);
+    }
+  }
+
+  // Execute search automatically when page loads
+  fetchColleges();
+</script>
+</body>
+</html>
