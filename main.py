@@ -1,18 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import pandas as pd
 
 app = FastAPI()
 
-# 🟢 Add CORS Middleware to allow requests from Vercel / Chrome
+# Enable CORS so Vercel can fetch data from Render
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins (Vercel, Localhost, Mobile)
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows GET, POST, etc.
+    allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ... your rest of the routes and python code ...
 
 # Load CSV on startup
 df = pd.read_csv("colleges_master.csv")
@@ -47,6 +46,5 @@ def predict_colleges(
     if branch != "All Branches":
         filtered = filtered[filtered["Branch"] == branch]
 
-    # Return clean JSON response
-    results = filtered.sort_values(by="Min Percentage (%)", ascending=False)
-    return results.to_dict(orient="records")
+    # Convert DataFrame results into a JSON list
+    return filtered.to_dict(orient="records")
