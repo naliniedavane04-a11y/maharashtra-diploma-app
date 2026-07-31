@@ -106,8 +106,8 @@
 
     // Dynamically picks localhost when testing locally, or Render URL on live web
     const baseUrl = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
-      ? "http://127.0.0.1:8000"
-      : "https://maharashtra-diploma-api.onrender.com"; 
+  ? "http://127.0.0.1:8000"
+  : "https://maharashtra-diploma-api.onrender.com"; //  Your actual Render URL here
 
     const url = `${baseUrl}/api/predict?percentage=${perc}&category=${cat}&college_type=${encodeURIComponent(type)}&district=${encodeURIComponent(dist)}&branch=${encodeURIComponent(branch)}`;
 
