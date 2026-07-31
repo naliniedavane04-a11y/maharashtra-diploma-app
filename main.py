@@ -4,7 +4,6 @@ import pandas as pd
 
 app = FastAPI()
 
-# Enable CORS so Vercel can fetch data from Render
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,25 +12,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load CSV on startup
 df = pd.read_csv("colleges_master.csv")
 
 @app.get("/api/predict")
 def predict_colleges(
-    district: str = "All Districts",
-    college_type: str = "All Types (Govt & Private)",
-    category: str = "SC",
     percentage: float = 78.0,
+    category: str = "SC",
+    college_type: str = "All Types",
+    district: str = "All Districts",
     branch: str = "All Branches"
 ):
-    # 1. Filter by Percentage Cutoff
+    # 1. Filter by Percentage
     filtered = df[df["Min Percentage (%)"] <= percentage].copy()
 
     # 2. Filter by College Type
-    if college_type != "All Types (Govt & Private)":
+    if "All" not in college_type:
         if "Government" in college_type:
             filtered = filtered[filtered["Type"].str.contains("Government", case=False, na=False)]
-        elif "Private" in college_type:
+        elif "Private" in college_type or "Un-Aided" in college_type:
             filtered = filtered[filtered["Type"].str.contains("Private", case=False, na=False)]
 
     # 3. Filter by Category
@@ -41,10 +39,11 @@ def predict_colleges(
     filtered = cat_filtered
 
     # 4. Filter by District & Branch
-    if district != "All Districts":
-        filtered = filtered[filtered["District"] == district]
-    if branch != "All Branches":
-        filtered = filtered[filtered["Branch"] == branch]
+    if "All" not in district:
+        filtered = filtered[filtered["District"].str.lower() == district.lower()]
+        
+    if "All" not in branch:
+        filtered = filtered[filtered["Branch"].str.lower() == branch.lower()]
 
-    # Convert DataFrame results into a JSON list
+    # Return list of results
     return filtered.to_dict(orient="records")
