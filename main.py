@@ -1,17 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import pandas as pd
 
-app = FastAPI(title="Maharashtra Diploma Predictor API")
+app = FastAPI()
 
-# Enable CORS so your local HTML frontend can communicate with FastAPI
+# 🟢 Add CORS Middleware to allow requests from Vercel / Chrome
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Allows all origins (Vercel, Localhost, Mobile)
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"],  # Allows GET, POST, etc.
     allow_headers=["*"],
 )
+
+# ... your rest of the routes and python code ...
 
 # Load CSV on startup
 df = pd.read_csv("colleges_master.csv")
